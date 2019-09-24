@@ -26,6 +26,10 @@ describe Oystercard do
       oystercard.touch_in(station)
       expect(oystercard.entry_station).to eq station
     end
+
+    it 'creates an empty journey history' do
+      expect(subject.history).to be_empty
+    end
   end
   #deduct method no longer tested as it is a private method
 
@@ -54,20 +58,27 @@ describe Oystercard do
     it "touching out sets in_journey to false" do
       subject.top_up(40)
       subject.touch_in(station)
-      subject.touch_out
+      subject.touch_out(station)
       expect(subject).not_to be_in_journey
     end
     it "deducts minimum fare from balance when touching out" do
       subject.top_up(10)
       subject.touch_in(station)
-      expect{subject.touch_out}.to change{oystercard.balance}.by (-Oystercard::MIN_BALANCE)
+      expect{subject.touch_out(station)}.to change{oystercard.balance}.by (-Oystercard::MIN_BALANCE)
     end
 
     it "forgets a entry station upon checking out" do
       subject.top_up(10)
       subject.touch_in('kingsx')
-      subject.touch_out
+      subject.touch_out(station)
       expect(subject.entry_station).to eq nil
+    end
+
+    it "stores an exit station to instance variable on touching out" do
+      subject.top_up(40)
+      subject.touch_in(station)
+      subject.touch_out('station')
+      expect(subject.exit_station).to eq 'station'
     end
   end
 
@@ -77,6 +88,13 @@ describe Oystercard do
       subject.touch_in('kings')
       subject.touch_out
       expect(subject.history).to include('kingsx')
+    end
+
+    it "stores a completed journey in history" do
+      subject.top_up(10)
+      subject.touch_in('Kings Cross')
+      subject.touch_out('Aldgate East')
+      expect(subject.history).to include('Kings Cross' => 'Aldgate East')
     end
   end
 
